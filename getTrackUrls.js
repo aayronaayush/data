@@ -1,7 +1,7 @@
 const axios = require("axios");
 const fs = require("fs")
 
-const apiKey = 'Bearer <oauth token>'
+const apiKey = 'Bearer <token>'
 
 const headers = {
 	"Accept": "application/json",
@@ -9,12 +9,12 @@ const headers = {
 	"Authorization": apiKey
 }
 
-const genres = ["party"]
+const genres = ["chill"]
 
 const trackUrls = {}
 
 function getUrl(genre, limit=50, offset=0) {
-	return `https://api.spotify.com/v1/search?q=genre%3A${genre}&type=track&limit=${limit}&offset=${offset}`
+	return `https://api.spotify.com/v1/search?q=${genre}&type=track&limit=${limit}&offset=${offset}`
 }
 
 async function getIds(genre) {
@@ -25,6 +25,7 @@ async function getIds(genre) {
 	})
 	.then(async (response) => {
 		console.log(response)
+
 		const data = response.data
 		total = data.tracks.total
 		const limit = 50;
@@ -34,6 +35,7 @@ async function getIds(genre) {
 
 		for (let i=0; i < totalOffsets; i++) {
 			const url = getUrl(genre, limit, i)
+			console.log(url)
 			await axios(url, {
 				method: "GET",
 				headers
@@ -41,7 +43,7 @@ async function getIds(genre) {
 			.then(response => {
 				const tracks = response.data.tracks
 				tracks.items.forEach(item => {
-					console.log(item.href)
+					// console.log(item.href)
 					fs.writeFileSync(`${genre}Urls.csv`, `${item.href}\n`, {flag: "a"}, (err) => {
 						if (err) {
 							console.error(err)

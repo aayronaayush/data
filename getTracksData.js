@@ -1,9 +1,9 @@
 const axios = require('axios')
 const fs = require('fs')
 
-const genres = ["pop"]
+const genres = ["chill"]
 
-const apiKey = 'Bearer <oauth token>'
+const apiKey = 'Bearer <token>'
 
 const headers = {
 	"Accept": "application/json",
@@ -17,12 +17,17 @@ const fileHeader = [...meta, ...features]
 
 genres.forEach(async genre => {
 // fs.writeFileSync(`${genre}TracksData.csv`, `${fileHeader.join(",")}\n`)
-	const urls = fs.readFileSync(`${genres[0]}Urls.csv`, 'utf8')
+	const urls = fs.readFileSync(`${genres[0]}UniqueUrls.csv`, 'utf8')
 	const urlsArray = urls.split('\n')
 
-	const lines = fs.readFileSync(`${genre}TracksData.csv`, 'utf8').split("\n")
-	const skip = lines.length - 2;
+	let lines = ""
+	let skip = 0
+	if (fs.existsSync(`${genre}TracksData.tsv`)) {
+		lines = fs.readFileSync(`${genre}TracksData.tsv`, 'utf8').split("\n")
+		skip = lines.length - 2 | 0;
+	}
 
+	console.log(skip)
 
 	for (let i=skip; i < urlsArray.length; i++) {
 		await new Promise(resolve => setTimeout(resolve, 5));
@@ -50,7 +55,7 @@ genres.forEach(async genre => {
 					features.forEach(feature => {
 						trackData.push(songFeatures[feature])
 					})
-					fs.writeFileSync(`${genre}TracksData.csv`, `${trackData.join(",")}\n`, {flag: "a"})
+					fs.writeFileSync(`${genre}TracksData.tsv`, `${trackData.join("\t")}\n`, {flag: "a"})
 				})
 				.catch(err => {
 					console.log(err)
