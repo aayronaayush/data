@@ -1,9 +1,10 @@
 const axios = require('axios')
 const fs = require('fs')
 
-const genres = ["chill"]
+const genres = require("./genre")
 
-const apiKey = 'Bearer <token>'
+const token = require("./token")
+const apiKey = `Bearer ${token}`
 
 const headers = {
 	"Accept": "application/json",
@@ -11,13 +12,21 @@ const headers = {
 	"Authorization": apiKey
 }
 
+if (fs.existsSync(`${genres[0]}TracksData.csv`)) {
+	fs.rmSync(`${genres[0]}Urls.csv`)
+}
+
 const meta = ['Genre', 'Name', "TrackId", "Popularity", "Year"]
 const features = ["acousticness", "analysis_url", "danceability", "duration_ms", "energy", "instrumentalness", "key", "liveness", "loudness", "mode", "speechiness", "tempo", "time_signature", "track_href", "valence"]
 const fileHeader = [...meta, ...features]
 
+fs.writeFileSync("header", fileHeader.join("\t"))
+
+console.log(fileHeader.join("\t"))
+
 genres.forEach(async genre => {
 // fs.writeFileSync(`${genre}TracksData.csv`, `${fileHeader.join(",")}\n`)
-	const urls = fs.readFileSync(`${genres[0]}UniqueUrls.csv`, 'utf8')
+	const urls = fs.readFileSync(`${genres[0]}Urls.csv`, 'utf8')
 	const urlsArray = urls.split('\n')
 
 	let lines = ""
@@ -61,8 +70,6 @@ genres.forEach(async genre => {
 					console.log(err)
 				})
 			}
-
-			// make a request for song features
 		})
 		.catch(err => {
 			console.log(err)

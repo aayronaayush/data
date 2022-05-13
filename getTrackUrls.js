@@ -1,7 +1,11 @@
 const axios = require("axios");
 const fs = require("fs")
 
-const apiKey = 'Bearer <token>'
+const genres = require("./genre")
+
+const token = require("./token")
+
+const apiKey = `Bearer ${token}`
 
 const headers = {
 	"Accept": "application/json",
@@ -9,13 +13,19 @@ const headers = {
 	"Authorization": apiKey
 }
 
-const genres = ["chill"]
 
 const trackUrls = {}
 
-function getUrl(genre, limit=50, offset=0) {
-	return `https://api.spotify.com/v1/search?q=${genre}&type=track&limit=${limit}&offset=${offset}`
+const trackHref = []
+
+if (fs.existsSync(`${genres[0]}Urls.csv`)) {
+	fs.rmSync(`${genres[0]}Urls.csv`)
 }
+
+function getUrl(genre, limit=50, offset=0) {
+	return `https://api.spotify.com/v1/search?q=${genre}&type=track&limit=${limit}&offset=${(offset + 1)*limit}`
+}
+
 
 async function getIds(genre) {
 	const url = getUrl(genre);
@@ -29,11 +39,12 @@ async function getIds(genre) {
 		const data = response.data
 		total = data.tracks.total
 		const limit = 50;
-		const totalOffsets = total/limit
+		const totalOffsets = Math.floor(total/limit)
 
 		trackUrls[genre] = []
-
+		
 		for (let i=0; i < totalOffsets; i++) {
+			console.log({totalOffsets, total})
 			const url = getUrl(genre, limit, i)
 			console.log(url)
 			await axios(url, {
@@ -44,18 +55,22 @@ async function getIds(genre) {
 				const tracks = response.data.tracks
 				tracks.items.forEach(item => {
 					// console.log(item.href)
-					fs.writeFileSync(`${genre}Urls.csv`, `${item.href}\n`, {flag: "a"}, (err) => {
-						if (err) {
-							console.error(err)
-						}
-					})
-					trackUrls[genre] = [...trackUrls[genre], item.href]
+					if (!trackHref.includes(item.href)) {
+						trackHref.push(item.href)
+						fs.writeFileSync(`${genre}Urls.csv`, `${item.href}\n`, {flag: "a"}, (err) => {
+							if (err) {
+								console.error(err)
+							}
+						})
+						trackUrls[genre] = [...trackUrls[genre], item.href]
+					}
 				})
 			})
 			.catch(err => {
-				console.log(`Error requesting: ${url}`)
 				// console.log(url)
 				console.log(err)
+				console.log(`Error requesting: ${url}`)
+				console.log(err.response)
 			})
 		}
 	})
